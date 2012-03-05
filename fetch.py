@@ -3,10 +3,12 @@ __author__ = 'peter@phyn3t.com'
 import putio
 import os
 import httplib2
+import ConfigParser
+import sys
 
 class fetch:
 
-    def getAllFolders(self):
+    def getAllItems(self):
         """Get entire put.io account and return a dict
 
          """
@@ -25,23 +27,15 @@ class fetch:
                         control.insert(0,item.id)
                     else:
                         self.contents[item.id] = {
-                            'name': item.name, 'parentID': item.parentID,
-                            'size': item.size, 'uri': item.download_uri
+                            'name': item.name, 'parentID': item.parent_id,
+                            'size': item.size, 'uri': item.download_url
                         }
             except putio.PutioError as err:
                 print("Can't get content for Directory")
                 pass
 
-        print(self.contents)
+        print(self.contents) #DEBUG
 
-    def getFiles(self):
-        """ Get all the files for our directories
-        """
-
-        for folderID, values in self.contents.items():
-            files = self.API.get_items(parent_id=folderID)
-            for file in files:
-               print(file.name)
 
     def putioPath(self, itemID=None):
         """Figures out the full path to fill on Put.io
@@ -90,21 +84,38 @@ class fetch:
         """We will fetch a file and store it locally.
 
         fileID - is the file ID of the file you want to download from put.io
-        fileDir - The local directory you want to put the file
+        fileDir - The file name and local directory to save the file.
         """
 
+        with open(fileDir, 'wb') as file:
+            data = self.h.request.urlopen(self.contents[fileID]['uri']).read()
+            file.write(data)
 
 
 
+    def __init__(self,configLocation=None):
 
+        if configLocation == None: #Check to make sure config exists
+            raise ValueError("Provide Valid Config FILE!")
+            sys.exit(1)
 
+        config = ConfigParser.RawConfigParser()
+        config.read(configLocation)
 
-    def __init__(self):
-        self.API = putio.Api("", "") #config_file
-        #self.putioPath('28791384')
-        self.test()
+        self.API = putio.Api(config.get(
+            'account','api_key'), config.get('account', 'api_secret'))
 
         self.h = httplib2.Http('.cache')
-        self.h.add_credentials('') #config_file
+        self.h.add_credentials(
+            config.get('account', 'putio_user'),
+            config.get('account', 'putio_psswd')
+        )
+
+        self.getAllItems()
+        self.fetchPutIOFile(
+            '28855313', 'C:/Users/pfisher/Desktop/front.png')#DEBUG REMOVE
 
 
+
+
+cat = fetch('config.cfg')
