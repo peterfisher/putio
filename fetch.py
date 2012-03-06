@@ -13,7 +13,6 @@ class fetch:
 
          """
 
-        self.contents = {}
         control = []
 
         for folder in self.API.get_items():
@@ -87,13 +86,40 @@ class fetch:
         fileDir - The file name and local directory to save the file.
         """
 
-        with open(fileDir, 'wb') as file:
-            data = self.h.request.urlopen(self.contents[fileID]['uri']).read()
-            file.write(data)
+        if fileID == None or fileDir == None:
+            raise ValueError('You must send a putio item id and file path.')
 
+        if not self.contents.__contains__(fileID):
+            self.getItem(fileID)
+
+
+        fileName = self.contents[fileID]['name']
+
+        resp, data = self.h.request(self.contents[fileID]['uri'])
+        if resp.status >= 400:
+            print("We couldn't downlaod the file: " + fileName)
+            print(resp)
+        else:
+            with open(fileDir, 'wb') as file:
+                file.write(data)
+
+    def getItem(self, fileID=None):
+        try:
+            putData = self.API.get_items(id=fileID)
+            for item in putData:
+                self.contents[fileID] = {
+                    'name': item.name, 'parentID': item.parent_id,
+                    'size': item.size, 'uri': item.download_url
+                }
+        except putio.PutioError as err:
+            print("Couldn't download file")
+            print(str(err))
 
 
     def __init__(self,configLocation=None):
+
+        #Global shit
+        self.contents = {}
 
         if configLocation == None: #Check to make sure config exists
             raise ValueError("Provide Valid Config FILE!")
@@ -111,9 +137,8 @@ class fetch:
             config.get('account', 'putio_psswd')
         )
 
-        self.getAllItems()
-        self.fetchPutIOFile(
-            '28855313', 'C:/Users/pfisher/Desktop/front.png')#DEBUG REMOVE
+        #self.getAllItems()
+        self.fetchPutIOFile('28855313', 'C:/Users/pfisher/Desktop/front.png')#DEBUG REMOVE
 
 
 
