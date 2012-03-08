@@ -9,8 +9,11 @@ import sys
 class fetch:
 
     def getAllItems(self):
-        """Get entire put.io account and return a dict
-
+        """Get entire put.io account and and save it to a dict called contents.
+            This function will iterate over your entire put.io account and
+            download all files. It saves the following attribuites to the
+            dictionary contents: item name, parent item ID, item size, and
+            download url.
          """
 
         control = []
@@ -33,13 +36,11 @@ class fetch:
                 print("Can't get content for Directory")
                 pass
 
-        print(self.contents) #DEBUG
-
 
     def putioPath(self, itemID=None):
-        """Figures out the full path to fill on Put.io
+        """Figures out the full path to a file on Put.io
 
-        id equals the id of the file which you want to determine the path for
+        itemID equals the id of the file which you want to determine the path.
         returns a string that contains the path of the file /foo/bar.txt
         """
 
@@ -53,30 +54,43 @@ class fetch:
                 path = self.API.get_items(id=itemID)[0].name + "/" + path
         return  "/" + path
 
-    def CreateLocalDirectory(self, file=None):
-        """Check whether local file and directory tree exists. Create if not.
-
-        file is a path to a local file. In format: /foo/bar.txt if it doesn't
-        exist we will create both the file and the directories to the file
-        location as it is found on put.io
-
-        Return False if file doesn't exist and True if the file exist.
+    def createLocalDirectory(self, file=None):
+        """Check whether local directory tree exists. Create if not.
         """
+
         if file == None:
             raise ValueError("Pass a file path!")
 
-        path = os.split(file)
+        path, fileName = os.path.split(file)
+
+        path = self.dlLocation + path
 
         try:
             if not os.path.exists(path):
                 os.makedirs(path)
-                return False
-            elif os.path.exists(file):
+            elif os.path.exists(path):
+                print("WARN: What the fuck the directory already exists!")
+        except OSError as err:
+            print("ERROR: Could not create directory for file")
+            print(str(err))
+
+    def checkLocalFile(self, file=None):
+        """"Check whether a local file exists.
+
+        file is a path to a local file in format: /foo/bar.txt
+        """
+
+        if file == None:
+            raise ValueError("Pass a file path!")
+
+        try:
+            if os.path.exists(file):
                 return True
             else:
                 return False
         except OSError as err:
-            print("ERROR: Could not create directory for file")
+            print(
+                "ERROR: Couldn;t read filesystem to determine file existence")
             print(str(err))
 
     def fetchPutIOFile(self, fileID=None, fileDir=None):
@@ -92,15 +106,15 @@ class fetch:
         if not self.contents.__contains__(fileID):
             self.getItem(fileID)
 
-
         fileName = self.contents[fileID]['name']
 
+        print("Downloading file: " + fileName)
         resp, data = self.h.request(self.contents[fileID]['uri'])
         if resp.status >= 400:
             print("We couldn't downlaod the file: " + fileName)
             print(resp)
         else:
-            with open(fileDir, 'wb') as file:
+            with open(self.dlLocation + fileDir, 'wb') as file:
                 file.write(data)
 
     def getItem(self, fileID=None):
@@ -120,13 +134,14 @@ class fetch:
 
         #Global shit
         self.contents = {}
-
-        if configLocation == None: #Check to make sure config exists
+        if configLocation == None or not os.path.exists(configLocation):
             raise ValueError("Provide Valid Config FILE!")
             sys.exit(1)
 
         config = ConfigParser.RawConfigParser()
         config.read(configLocation)
+
+        self.dlLocation = config.get('local', 'store_location')
 
         self.API = putio.Api(config.get(
             'account','api_key'), config.get('account', 'api_secret'))
@@ -134,13 +149,5 @@ class fetch:
         self.h = httplib2.Http('.cache')
         self.h.add_credentials(
             config.get('account', 'putio_user'),
-            config.get('account', 'putio_psswd')
+            config.get('account', 'putio_passwd')
         )
-
-        #self.getAllItems()
-        self.fetchPutIOFile('28855313', 'C:/Users/pfisher/Desktop/front.png')#DEBUG REMOVE
-
-
-
-
-cat = fetch('config.cfg')
