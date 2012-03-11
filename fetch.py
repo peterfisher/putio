@@ -35,6 +35,7 @@ class fetch:
             except putio.PutioError as err:
                 print("Can't get content for Directory")
                 pass
+        return self.contents
 
 
     def putioPath(self, itemID=None):
@@ -52,7 +53,7 @@ class fetch:
                 break
             else:
                 path = self.API.get_items(id=itemID)[0].name + "/" + path
-        return  "/" + path
+        return  self.dlLocation + path
 
     def createLocalDirectory(self, file=None):
         """Check whether local directory tree exists. Create if not.
@@ -63,13 +64,9 @@ class fetch:
 
         path, fileName = os.path.split(file)
 
-        path = self.dlLocation + path
-
         try:
             if not os.path.exists(path):
                 os.makedirs(path)
-            elif os.path.exists(path):
-                print("WARN: What the fuck the directory already exists!")
         except OSError as err:
             print("ERROR: Could not create directory for file")
             print(str(err))
@@ -114,7 +111,7 @@ class fetch:
             print("We couldn't downlaod the file: " + fileName)
             print(resp)
         else:
-            with open(self.dlLocation + fileDir, 'wb') as file:
+            with open(fileDir, 'wb') as file:
                 file.write(data)
 
     def getItem(self, fileID=None):
@@ -141,7 +138,7 @@ class fetch:
         config = ConfigParser.RawConfigParser()
         config.read(configLocation)
 
-        self.dlLocation = config.get('local', 'store_location')
+        self.dlLocation = config.get('local', 'store_location') #We need to check to make sure this is /foo/bar/
 
         self.API = putio.Api(config.get(
             'account','api_key'), config.get('account', 'api_secret'))
