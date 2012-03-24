@@ -6,12 +6,19 @@ import httplib2
 import ConfigParser
 import sys
 import time
+import re
 
 class fetch:
 
     def get_items(self, parent=None, id_Number=None):
         """ Handles putio.get_items request with better error handling.
 
+        Since the putio API will hand back HTTP exception all the time
+        this function will allow them to happen without crashing your script.
+        If there are no items in a directory we return an empty list.
+
+        Return - A list of Item objects (from putio class...) or an empty list
+        if there are no items to return.
         """
 
         sigkill = 0
@@ -22,6 +29,7 @@ class fetch:
                 return value
             except putio.PutioError as err:
                 if str(err) == "You have no items to show.":
+                    print("Empty Directory...")
                     return []
                 print("Warning: Fail to make putio request. Trying again.")
                 print("Debug: " + str(err))
@@ -78,6 +86,8 @@ class fetch:
                 break
             else:
                 path = self.get_items(id_Number=itemID)[0].name + "/" + path
+
+        path = path.replace('\\\\','/')
         return  self.dlLocation + path
 
     def createLocalDirectory(self, file=None):
@@ -150,15 +160,21 @@ class fetch:
         """Gets all the files in our local putio directory
 
         The reason for this function is os.path.exists is so slow. Walking
-        the local directory and then doing a list lookup is a lot faster.
+        the local directory and then doing a list lookup is a lot faster. We
+        also clean up the path t o make it
+
+        ###TODO - support other drives in windows other than C.
 
         returns a list containing the full path of each file in our local putio
         directory.
         """
 
-        for root, dirs, files in os.walk(self.dlLocation):
-            for name in files:
-                self.localStore.append(os.path.join(root, name))
+        for dirpath, dirnames, filenames in os.walk(self.dlLocation):
+            for name in filenames:
+                currentPath = os.path.join(dirpath, name)
+                currentPath = re.sub('^\w:', '', currentPath)
+                currentPath = re.sub(r"\\",'/', currentPath)
+                self.localStore.append(currentPath)
 
         return self.localStore
 
