@@ -54,7 +54,7 @@ class fetch:
         for folder in self.get_items():
             control.append(folder.id)
 
-        while control.__len__() > 0:
+        while len(control) > 0:
             try:
                 for item in self.get_items(parent=control.pop()):
                     print("Getting content for: " + item.name)
@@ -87,7 +87,7 @@ class fetch:
             else:
                 path = self.get_items(id_Number=itemID)[0].name + "/" + path
 
-        path = path.replace('\\\\','/')
+        #path = path.replace('\\\\','/')
         return  self.dlLocation + path
 
     def createLocalDirectory(self, file=None):
@@ -119,7 +119,7 @@ class fetch:
         if fileID == None or fileDir == None:
             raise ValueError('You must send a putio item id and file path.')
 
-        if not self.contents.__contains__(fileID):
+        if not fileID in self.contents:
             self.getItem(fileID)
 
         fileName = self.contents[fileID]['name']
@@ -135,7 +135,7 @@ class fetch:
                     with open(fileDir, 'wb') as file:
                         file.write(data)
                         break
-            except httplib2.HttpLib2Error as err:
+            except httplib2.HttpLib2Error or httplib2.socket.error as err:
                 print("Warning we had a httplib2 error... Trying again.")
                 print(str(err))
                 if sigkill <= 3:
@@ -191,10 +191,12 @@ class fetch:
         config = ConfigParser.RawConfigParser()
         config.read(configLocation)
 
-        self.dlLocation = config.get('local', 'store_location') #We need to check to make sure this is /foo/bar/
+        self.dlLocation = config.get('local', 'store_location')
+        if re.search("/$", self.dlLocation) == None:
+            self.dlLocation = self.dlLocation + '/'
 
         self.API = putio.Api(config.get(
-            'account','api_key'), config.get('account', 'api_secret'))
+            'account','api_key'), config.get('account', 'api_secret')) #We don't handle exceptions here!!!
 
         self.h = httplib2.Http('.cache')
         self.h.add_credentials(
