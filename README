@@ -1,7 +1,20 @@
-Please note this is a work in progress and is NOT stable.
+Please check fetch.py for information on the module I created for downloading items
+from put.io to your computer.l
 
-Once I have a working prototype I will fill this out with more useful information.
+Check the script "control.py" for how you might use the fetch.py module.
+
+The fetch module requires a configuration file which you provide when creating
+a fetch object. The configuration file must look similar to this:
+
+[account]
+api_key = test_account
+api_secret = 411salmonsteak
+putio_user = myputioAccount
+putio_passwd = putioPassword
+
+[local]
+store_location = /local/download/location/of/putio/files
+
 
 Please contact me if you have any suggestion: peter@phyn3t.com
-
 Public key: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x24D63A2663FA4980

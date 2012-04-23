@@ -1,4 +1,5 @@
 __author__ = 'peter@phyn3t.com'
+__pgpKey__ = 'http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x24D63A2663FA4980'
 
 import putio
 import os
@@ -202,4 +203,4 @@ class fetch:
         self.h.add_credentials(
             config.get('account', 'putio_user'),
             config.get('account', 'putio_passwd')
-        )
+        ) # We might be able to use the api_key instead of http user/pass
