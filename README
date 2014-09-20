@@ -1,3 +1,5 @@
+WARNING: This module uses API v1 which is no longer supprted or used by put.io
+
 Please check fetch.py for information on the module I created for downloading items
 from put.io to your computer.l
 
