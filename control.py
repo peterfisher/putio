@@ -36,7 +36,7 @@ try:
         print(path)
 
         #If the file doesn't exist locally lets download it from put.io
-        if not localItems.__contains__(path):
+        if not path in localItems:
             get.createLocalDirectory(path)
             get.fetchPutIOFile(item, path)
         else:
